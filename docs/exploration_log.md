@@ -240,3 +240,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 | Jun 11 | `kaggle_nb9_global_match.py` | Global GED approximation | timeout | No |
 | **Jun 12** | **`kaggle_nb4_mcts.py`** | **MCTS guided search** | **14,484** | **Yes** |
 <!-- checkpoint: 17174 Jun 7 14:20 -->
+<!-- season2 final: 17676 -->
