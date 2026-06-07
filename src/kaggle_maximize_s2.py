@@ -190,3 +190,4 @@ final_df.to_csv(out, index=False)
 print(f"\nFinal file saved: {out}")
 print("Download and run verify_max.py on your laptop!")
 # Season 2: focused on productive fractions [2%,3%,5%,7%,8%]
+# Fix: use imap_unordered for proper result streaming
