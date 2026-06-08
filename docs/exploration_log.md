@@ -244,3 +244,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 <!-- checkpoint: 19583 Jun 8 13:20 -->
 <!-- season3 peak: 19827 -->
 <!-- CRASH: 19827 -> ~100 under LWCC Jun 8 22:15 -->
+<!-- Phase 2 begin: LWCC inside grow loop -->
