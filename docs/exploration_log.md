@@ -242,3 +242,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 <!-- checkpoint: 17174 Jun 7 14:20 -->
 <!-- season2 final: 17676 -->
 <!-- checkpoint: 19583 Jun 8 13:20 -->
+<!-- season3 peak: 19827 -->
