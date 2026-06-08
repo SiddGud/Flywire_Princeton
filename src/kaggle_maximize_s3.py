@@ -239,3 +239,4 @@ out = f'/kaggle/working/submission_S3_FINAL_{global_best_n}.csv'
 final_df.to_csv(out, index=False)
 print(f"\nFinal file saved: {out}")
 print("Download and run verify_max.py on your laptop!")
+# Season 3: preferentially remove low-degree boundary nodes
