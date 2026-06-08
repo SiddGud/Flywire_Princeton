@@ -240,3 +240,4 @@ final_df.to_csv(out, index=False)
 print(f"\nFinal file saved: {out}")
 print("Download and run verify_max.py on your laptop!")
 # Season 3: preferentially remove low-degree boundary nodes
+# modes: boundary=bottom quantile, mixed=70/30 boundary+random
