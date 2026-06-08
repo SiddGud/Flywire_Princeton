@@ -111,3 +111,4 @@ if violations == 0:
     print("The correspondence strictly defines mutually isomorphic directed induced subgraphs.")
 else:
     print(f"\nRESULTS: FAILED with {violations} edge inconsistencies.")
+# Check: extract LWCC to validate connectivity
