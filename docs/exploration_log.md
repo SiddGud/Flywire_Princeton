@@ -241,3 +241,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 | **Jun 12** | **`kaggle_nb4_mcts.py`** | **MCTS guided search** | **14,484** | **Yes** |
 <!-- checkpoint: 17174 Jun 7 14:20 -->
 <!-- season2 final: 17676 -->
+<!-- checkpoint: 19583 Jun 8 13:20 -->
