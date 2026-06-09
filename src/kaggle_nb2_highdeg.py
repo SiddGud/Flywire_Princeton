@@ -246,3 +246,4 @@ if __name__ == '__main__':
     out = f'/kaggle/working/submission_NB2_FINAL_{global_best_n}.csv'
     pd.DataFrame([{'BANC':b,'FAFB':f,'MCNS':m} for b,(f,m) in global_best_core.items()]).to_csv(out, index=False)
     print(f"Saved: {out}")
+# LWCC enforced at every grow iteration, not post-hoc
