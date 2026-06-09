@@ -247,3 +247,4 @@ if __name__ == '__main__':
     pd.DataFrame([{'BANC':b,'FAFB':f,'MCNS':m} for b,(f,m) in global_best_core.items()]).to_csv(out, index=False)
     print(f"Saved: {out}")
 # LWCC enforced at every grow iteration, not post-hoc
+# Race 2000 hub seeds in parallel, keep largest LWCC
