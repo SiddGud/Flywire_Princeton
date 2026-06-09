@@ -246,3 +246,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 <!-- CRASH: 19827 -> ~100 under LWCC Jun 8 22:15 -->
 <!-- Phase 2 begin: LWCC inside grow loop -->
 <!-- nb2 result: 8526 connected Jun 9 12:00 -->
+<!-- nb3: boundary seeding did not outperform nb2 -->
