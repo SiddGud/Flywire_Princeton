@@ -248,3 +248,4 @@ if __name__ == '__main__':
                 
             generation += 1
 # Crossover: merge non-conflicting nodes from two parent cores
+# Tournament selection: keep top 10 largest unique genomes
