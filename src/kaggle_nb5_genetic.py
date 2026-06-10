@@ -247,3 +247,4 @@ if __name__ == '__main__':
                 print(f"  Gen {generation:4d} | Best Offspring: {best_in_gen:,} (Avg: {avg_in_gen:,}) | {elapsed:.1f}s | Global Best: {global_best_n:,}", flush=True)
                 
             generation += 1
+# Crossover: merge non-conflicting nodes from two parent cores
