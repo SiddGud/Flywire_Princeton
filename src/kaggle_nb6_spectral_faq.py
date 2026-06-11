@@ -255,3 +255,4 @@ for iteration in range(50):
         print(f" +0 nodes. | Time: {t1-t0:.1f}s")
 
 print("Notebook 6 Execution Complete.")
+# FAQ: quadratic_assignment on boundary halo adjacency matrices
