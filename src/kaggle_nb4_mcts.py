@@ -265,3 +265,4 @@ if __name__ == '__main__':
     pd.DataFrame([{'BANC':b,'FAFB':f,'MCNS':m} for b,(f,m) in global_best_core.items()]).to_csv(out, index=False)
     print(f"Saved: {out}")
 # MCTS: evaluate future value V(c|S) = |G^T(S union {c})|
+# Tuned: T=15 rollout iterations, epsilon in [0.02, 0.06]
