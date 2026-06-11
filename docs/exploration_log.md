@@ -249,3 +249,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 <!-- nb3: boundary seeding did not outperform nb2 -->
 <!-- nb5 run1: 15079 Jun 10 13:30 -->
 <!-- nb5 final: 14955 connected -->
+<!-- nb6: 15083 soft, needs discrete verification -->
