@@ -252,3 +252,4 @@ Attempted to frame the problem as minimizing graph edit distance between the thr
 <!-- nb6: 15083 soft, needs discrete verification -->
 <!-- nb4 run1: 13427 connected Jun 11 17:30 -->
 <!-- nb4 final run started Jun 12 10:00 -->
+<!-- FINAL: 14484 zero violations Jun 12 15:30 -->
