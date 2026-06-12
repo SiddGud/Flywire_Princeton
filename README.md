@@ -24,9 +24,9 @@ This is a three-way maximum common induced subgraph problem, which is NP-hard. T
 
 The three connectomes are directed graphs $G_B$, $G_F$, and $G_M$. We want to find the largest set of neurons $S$ with mappings $\phi$ (BANC→FAFB) and $\psi$ (BANC→MCNS) such that:
 
-$$
-(u, v) \in E_B \iff (\phi(u), \phi(v)) \in E_F \iff (\psi(u), \psi(v)) \in E_M
-$$
+```text
+edge(b_i, b_j) in BANC  <==>  edge(f(b_i), f(b_j)) in FAFB  <==>  edge(g(b_i), g(b_j)) in MCNS
+```
 
 *In plain terms: a synapse from neuron $u$ to neuron $v$ must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions. The result must also form a single connected subgraph.*
 
