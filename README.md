@@ -22,11 +22,11 @@ This is a three-way maximum common induced subgraph problem, which is NP-hard. T
 
 > **Not interested in the math?** [Click here to skip to the algorithmic approach.](#foundational-algorithm-signature-based-iterative-growth)
 
-Formally, I searched for the largest bijection $f: V_{\text{BANC}} \to V_{\text{FAFB}}$ and $g: V_{\text{BANC}} \to V_{\text{MCNS}}$ such that for every pair of matched neurons $(b_i, b_j)$:
+The three connectomes are directed graphs $G_B$, $G_F$, and $G_M$. We want to find the largest set of neurons $S$ with mappings $\phi$ (BANC→FAFB) and $\psi$ (BANC→MCNS) such that:
 
-```text
-edge(b_i, b_j) in BANC  <==>  edge(f(b_i), f(b_j)) in FAFB  <==>  edge(g(b_i), g(b_j)) in MCNS
-```
+$$
+(u, v) \in E_B \iff (\phi(u), \phi(v)) \in E_F \iff (\psi(u), \psi(v)) \in E_M
+$$
 
 *In plain terms: a synapse from neuron $u$ to neuron $v$ must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions. The result must also form a single connected subgraph.*
 
