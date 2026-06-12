@@ -28,7 +28,7 @@ $$
 (u, v) \in E_B \iff (\phi(u), \phi(v)) \in E_F \iff (\psi(u), \psi(v)) \in E_M
 $$
 
-*In plain terms: a synapse from neuron $u$ to neuron $v$ must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions. The result must also form a single connected subgraph.*
+*In plain terms: a synapse from neuron u to neuron v must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions. The result must also form a single connected subgraph.*
 
 **Signature Function** — used in [`kaggle_nb2_highdeg.py`](src/kaggle_nb2_highdeg.py), [`kaggle_nb4_mcts.py`](src/kaggle_nb4_mcts.py), and all grow scripts.
 
