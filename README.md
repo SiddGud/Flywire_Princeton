@@ -317,7 +317,7 @@ python verify_14484.py
 
 ```
 Flywire_Princeton/
-├── README.md                        # This file - technical approach and reproduction guide
+├── README.md                        # Technical approach and reproduction guide
 ├── science.md                       # Biological significance report (1-page summary)
 ├── network.csv                      # Final answer: 14,484 verified matched neuron triplets
 ├── src/
@@ -329,6 +329,8 @@ Flywire_Princeton/
 │   ├── kaggle_maximize_s2.py        # Season 2 refined perturbation fractions
 │   ├── hungarian_bijection.py       # Cell-type bipartite matching seeder
 │   └── verify_14484.py              # Final pairwise verification script (0 violations)
+├── docs/
+│   └── exploration_log.md           # Full chronological record of all strategies attempted
 └── figures/
     └── README.md                    # Embedded figures and link to interactive visualization
 ```
