@@ -22,83 +22,73 @@ This is a three-way maximum common induced subgraph problem, which is NP-hard. T
 
 > **Not interested in the math?** [Click here to skip to the algorithmic approach.](#foundational-algorithm-signature-based-iterative-growth)
 
-Let $G_B = (V_B, E_B)$, $G_F = (V_F, E_F)$, and $G_M = (V_M, E_M)$ denote the directed graphs for the BANC, FAFB, and MCNS connectomes respectively. The goal is to find the maximum cardinality set $S \subseteq V_B$ and injective mappings $\phi: S \to V_F$, $\psi: S \to V_M$ such that the **strict isomorphism constraint** holds for all pairs $(u, v) \in S \times S$:
+The three connectomes are directed graphs $G_B$, $G_F$, and $G_M$. We want to find the largest set of neurons $S$ with mappings $\phi$ (BANC→FAFB) and $\psi$ (BANC→MCNS) such that:
 
 $$
 (u, v) \in E_B \iff (\phi(u), \phi(v)) \in E_F \iff (\psi(u), \psi(v)) \in E_M
 $$
 
-*In plain terms: a synapse from neuron $u$ to neuron $v$ must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions, no approximations.*
+*In plain terms: a synapse from neuron $u$ to neuron $v$ must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions. The result must also form a single connected subgraph.*
 
-Subject to the **connectivity constraint** that the induced subgraph $G_B[S]$ forms a single weakly connected component.
+**Signature Function** — used in [`kaggle_nb2_highdeg.py`](src/kaggle_nb2_highdeg.py), [`kaggle_nb4_mcts.py`](src/kaggle_nb4_mcts.py), and all grow scripts.
 
-**Signature Function.** For a node $v \notin S$ (a frontier candidate) and the current matching $\phi, \psi$ restricted to $S$, define the structural signature:
-
-$$
-\sigma(v) = \left( \;\text{sort}\!\left(\{i \mid (b_i, v) \in E_B,\; b_i \in S\}\right),\; \text{sort}\!\left(\{i \mid (v, b_j) \in E_B,\; b_j \in S\}\right) \right)
-$$
-
-where $i$ is the positional index of $b_i$ in the current ordering of $S$. Two candidates $v \in V_B$, $f \in V_F$, $m \in V_M$ are a valid match if and only if $\sigma_B(v) = \sigma_F(f) = \sigma_M(m)$.
-
-*This is the core fingerprinting trick. Rather than testing all possible triplets, we encode each frontier neuron's connectivity to the matched core as a sorted tuple of neighbor indices - its structural "address". Two neurons from different connectomes can only be valid partners if their addresses are byte-for-byte identical. This collapses an O(N^3) search into a hash-table lookup per growth step.*
-
-**Growth Operator.** Let $\mathcal{C}(S)$ denote the set of all valid frontier candidate triplets at state $S$. The growth operator $\mathcal{G}$ is:
+For a frontier neuron $v$ not yet matched, its structural fingerprint is the sorted list of which core neurons it connects to:
 
 $$
-\mathcal{G}(S) = \text{LWCC}\!\left( S \cup \{(b, f, m) \in \mathcal{C}(S) : \text{no violation introduced}\} \right)
+\sigma(v) = \bigl(\,\text{sort}(\text{in-neighbors in core}),\; \text{sort}(\text{out-neighbors in core})\bigr)
 $$
 
-where LWCC extracts the largest weakly connected component. The algorithm iterates $S \leftarrow \mathcal{G}(S)$ until $\mathcal{G}(S) = S$.
+*Two neurons from different connectomes can be matched only if their fingerprints are identical. This turns a massive exhaustive search into a fast hash-table lookup.*
 
-*The growth operator finds every neuron on the boundary of the current matched set that can be added without breaking a single edge consistency, adds all of them, and discards disconnected islands via BFS. Repeated application drives the subgraph toward its local maximum. Each call runs in $O(\lvert E\rvert)$ time over the edge lists.*
-
-**Perturbation Operator.** Let $\delta_S(v)$ denote the internal degree of node $v$ in $G_B[S]$. The degree-weighted perturbation samples a removal set $R$ from the lowest-degree nodes:
+**Growth Operator** — [`kaggle_nb4_mcts.py`](src/kaggle_nb4_mcts.py), [`kaggle_maximize_s2.py`](src/kaggle_maximize_s2.py), [`kaggle_maximize_s3.py`](src/kaggle_maximize_s3.py)
 
 $$
-R \sim \text{Uniform}\!\left(\{v \in S : \delta_S(v) \leq Q_\alpha(\delta_S)\}^{(k)}\right)
+\mathcal{G}(S) = \text{LWCC}\!\left( S \cup \{\text{valid frontier triplets}\} \right)
 $$
 
-where $Q_\alpha$ is the $\alpha$-quantile of internal degrees, $k = \lfloor \epsilon |S| \rfloor$ for fraction $\epsilon \in [0.02, 0.08]$, and the superscript $(k)$ denotes a size-$k$ subset.
+*This finds every neuron on the boundary that can be added safely, adds them all, and keeps only the largest connected component (LWCC). Repeated application drives the subgraph toward its local maximum.*
 
-*Hub neurons with high internal degree are almost certainly correct matches and should be preserved. Peripheral neurons with degree 1-2 are the most likely source of topological blockages. By restricting removals to the bottom quantile of the degree distribution, the algorithm destabilizes the fringe while leaving the stable core intact - producing measurably faster convergence than uniform random removal.*
+**Perturbation Operator** — [`kaggle_maximize_s2.py`](src/kaggle_maximize_s2.py), [`kaggle_maximize_s3.py`](src/kaggle_maximize_s3.py)
 
-**MCTS Value Function.** For a frontier candidate $c = (b, f, m)$, the MCTS rollout estimate of its value is:
-
-$$
-V(c \mid S) = \left|\mathcal{G}^T(S \cup \{c\})\right|
-$$
-
-where $\mathcal{G}^T$ denotes $T = 15$ applications of the growth operator (a finite-horizon rollout). The committed candidate at each MCTS round is:
+To escape local maxima, we remove a fraction $\epsilon \in [0.02, 0.08]$ of nodes. Season 3 removes from the **lowest-degree** nodes first (boundary nodes), preserving the stable hub core:
 
 $$
-c^* = \arg\max_{c \in \mathcal{C}(S')} V(c \mid S'), \quad S' = S \setminus R
+R \;\sim\; \text{sample}\!\left(\{v \in S : \text{degree}(v) \leq \text{bottom quantile}\},\; \text{size} = \lfloor \epsilon \lvert S \rvert \rfloor \right)
 $$
 
-*Greedy growth is myopic: it adds any valid node immediately, even if that node's edge pattern will block many better additions later. MCTS fixes this by simulating the future. For each candidate on the frontier, we temporarily add it and run T = 15 grow iterations to see the eventual subgraph size. We permanently commit to the candidate with the highest future value - not just the first valid one found. This lookahead is what pushed the result from 13,427 to 14,484.*
+*Low-degree peripheral neurons are the most likely source of topological blockages. Targeting them - rather than random removal - produced measurably faster convergence.*
 
-**Genetic Crossover Operator.** Given two parent solutions $S_1, S_2$ with matchings $(\phi_1, \psi_1)$ and $(\phi_2, \psi_2)$, the crossover produces offspring:
+**MCTS Value Function** — [`kaggle_nb4_mcts.py`](src/kaggle_nb4_mcts.py)
 
-$$
-S_{\text{cross}} = \mathcal{G}\!\left(\text{LWCC}\!\left(\{b \in S_1 \cap S_2 : \phi_1(b) = \phi_2(b) \text{ and } \psi_1(b) = \psi_2(b)\}\right)\right)
-$$
-
-*Different random seeds converge to different local maxima - partially overlapping, partially distinct neuron sets. The crossover keeps only the neurons both parents agreed on (same BANC-to-FAFB and BANC-to-MCNS assignment), discards conflicts, and re-grows from the consensus. Because the consensus core is a higher-quality seed than either parent alone, the offspring is often larger than both parents.*
-
-Conflicting nodes (same $b$ but different $\phi$ or $\psi$ assignments across parents) are discarded. The offspring is then mutated by applying the perturbation operator $\mathcal{P}_{\epsilon}$ followed by regrowth:
+For each candidate $c$, estimate how much the subgraph will grow if we commit to $c$ now:
 
 $$
-\mathcal{G}(\mathcal{P}_{\epsilon}(S_{\text{cross}}))
+V(c \mid S) = \lvert \mathcal{G}^{15}(S \cup \{c\}) \rvert
 $$
 
-**Quadratic Assignment (Spectral FAQ).** The boundary alignment problem is cast as:
+We permanently commit to the candidate with the highest future value: $c^* = \arg\max_{c} \; V(c \mid S)$.
+
+*Greedy growth adds any valid node immediately, even if it blocks better additions later. MCTS looks 15 grow-steps ahead before committing. This lookahead is what pushed the result from 13,427 to 14,484.*
+
+**Genetic Crossover Operator** — [`kaggle_nb5_genetic.py`](src/kaggle_nb5_genetic.py)
+
+Given two parent solutions $S_1$ and $S_2$, keep only the neurons both agreed on, discard conflicts, and mutate/regrow:
 
 $$
-\max_{P \in \mathcal{P}_{n}} \text{tr}(A^T P B P^T)
+S_{\text{cross}} = \mathcal{G}\!\left(\text{LWCC}\!\left(\{b \in S_1 \cap S_2 : \phi_1(b) = \phi_2(b),\; \psi_1(b) = \psi_2(b)\}\right)\right)
 $$
 
-where $A, B \in \{0,1\}^{n \times n}$ are the adjacency matrices of the BANC and FAFB boundary halos, $\mathcal{P}_n$ is the set of $n \times n$ permutation matrices, and $n \leq 1{,}500$ is the halo size.
+*Different random seeds find different local maxima. The crossover merges the parts they agree on - producing a higher-quality consensus seed than either parent alone.*
 
-*Finding the exact optimum of this objective is NP-hard (it is the Graph Matching problem). The FAQ algorithm relaxes the constraint from permutation matrices to the convex hull of doubly-stochastic matrices and solves it via gradient ascent, then rounds back. The intuition: instead of greedily matching boundary neurons one-by-one, we ask what global permutation of FAFB boundary neurons maximizes the total edge agreement with BANC's boundary. The soft alignment is then snapped to strict discrete triplets and verified against MCNS.*
+**Quadratic Assignment (Spectral FAQ)** — [`kaggle_nb6_spectral_faq.py`](src/kaggle_nb6_spectral_faq.py)
+
+Align the boundary region of the subgraph by finding the permutation $P$ of FAFB neurons that maximizes edge overlap with BANC:
+
+$$
+\max_{P}\; \text{tr}(A^\top P B P^\top), \quad P \in \text{permutation matrices}
+$$
+
+*The exact solution is NP-hard. The FAQ algorithm relaxes this to a continuous optimization, solves it via gradient ascent, then rounds back to a valid discrete matching and verifies against MCNS.*
 
 
 
