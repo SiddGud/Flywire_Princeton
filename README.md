@@ -50,7 +50,7 @@ $$
 
 where LWCC extracts the largest weakly connected component. The algorithm iterates $S \leftarrow \mathcal{G}(S)$ until $\mathcal{G}(S) = S$.
 
-*The growth operator finds every neuron on the boundary of the current matched set that can be added without breaking a single edge consistency, adds all of them, and discards disconnected islands via BFS. Repeated application drives the subgraph toward its local maximum. Each call runs in $O(|E|)$ time over the edge lists.*
+*The growth operator finds every neuron on the boundary of the current matched set that can be added without breaking a single edge consistency, adds all of them, and discards disconnected islands via BFS. Repeated application drives the subgraph toward its local maximum. Each call runs in $O(\lvert E\rvert)$ time over the edge lists.*
 
 **Perturbation Operator.** Let $\delta_S(v)$ denote the internal degree of node $v$ in $G_B[S]$. The degree-weighted perturbation samples a removal set $R$ from the lowest-degree nodes:
 
@@ -84,7 +84,11 @@ $$
 
 *Different random seeds converge to different local maxima - partially overlapping, partially distinct neuron sets. The crossover keeps only the neurons both parents agreed on (same BANC-to-FAFB and BANC-to-MCNS assignment), discards conflicts, and re-grows from the consensus. Because the consensus core is a higher-quality seed than either parent alone, the offspring is often larger than both parents.*
 
-Conflicting nodes (same $b$ but different $\phi$ or $\psi$ assignments across parents) are discarded, and the offspring is mutated by applying $\mathcal{G}(\mathcal{P}_\epsilon(S_{\text{cross}}))$ for perturbation fraction $\epsilon$.
+Conflicting nodes (same $b$ but different $\phi$ or $\psi$ assignments across parents) are discarded. The offspring is then mutated by applying the perturbation operator $\mathcal{P}_{\epsilon}$ followed by regrowth:
+
+$$
+\mathcal{G}(\mathcal{P}_{\epsilon}(S_{\text{cross}}))
+$$
 
 **Quadratic Assignment (Spectral FAQ).** The boundary alignment problem is cast as:
 
