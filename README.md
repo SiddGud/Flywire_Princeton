@@ -68,13 +68,13 @@ $$
 V(c \mid S) = \left|\mathcal{G}^T(S \cup \{c\})\right|
 $$
 
-where $\mathcal{G}^T$ denotes $T=15$ applications of the growth operator (a finite-horizon rollout). The committed candidate at each MCTS round is:
+where $\mathcal{G}^T$ denotes $T = 15$ applications of the growth operator (a finite-horizon rollout). The committed candidate at each MCTS round is:
 
 $$
 c^* = \arg\max_{c \in \mathcal{C}(S')} V(c \mid S'), \quad S' = S \setminus R
 $$
 
-*Greedy growth is myopic: it adds any valid node immediately, even if that node's edge pattern will block many better additions later. MCTS fixes this by simulating the future. For each candidate on the frontier, we temporarily add it and run $T=15$ grow iterations to see the eventual subgraph size. We permanently commit to the candidate with the highest future value - not just the first valid one found. This lookahead is what pushed the result from 13,427 to 14,484.*
+*Greedy growth is myopic: it adds any valid node immediately, even if that node's edge pattern will block many better additions later. MCTS fixes this by simulating the future. For each candidate on the frontier, we temporarily add it and run T = 15 grow iterations to see the eventual subgraph size. We permanently commit to the candidate with the highest future value - not just the first valid one found. This lookahead is what pushed the result from 13,427 to 14,484.*
 
 **Genetic Crossover Operator.** Given two parent solutions $S_1, S_2$ with matchings $(\phi_1, \psi_1)$ and $(\phi_2, \psi_2)$, the crossover produces offspring:
 
