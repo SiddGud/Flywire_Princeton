@@ -18,6 +18,72 @@ This is a three-way maximum common induced subgraph problem, which is NP-hard. T
 
 ---
 
+## Mathematical Formulation
+
+Let $G_B = (V_B, E_B)$, $G_F = (V_F, E_F)$, and $G_M = (V_M, E_M)$ denote the directed graphs for the BANC, FAFB, and MCNS connectomes respectively. The goal is to find the maximum cardinality set $S \subseteq V_B$ and injective mappings $\phi: S \to V_F$, $\psi: S \to V_M$ such that the **strict isomorphism constraint** holds for all pairs $(u, v) \in S \times S$:
+
+$$
+(u, v) \in E_B \iff (\phi(u), \phi(v)) \in E_F \iff (\psi(u), \psi(v)) \in E_M
+$$
+
+subject to the **connectivity constraint** that the induced subgraph $G_B[S]$ forms a single weakly connected component.
+
+**Signature Function.** For a node $v \notin S$ (a frontier candidate) and the current matching $\phi, \psi$ restricted to $S$, define the structural signature:
+
+$$
+\sigma(v) = \left( \;\text{sort}\!\left(\{i \mid (b_i, v) \in E_B,\; b_i \in S\}\right),\; \text{sort}\!\left(\{i \mid (v, b_j) \in E_B,\; b_j \in S\}\right) \right)
+$$
+
+where $i$ is the positional index of $b_i$ in the current ordering of $S$. Two candidates $v \in V_B$, $f \in V_F$, $m \in V_M$ are a valid match if and only if $\sigma_B(v) = \sigma_F(f) = \sigma_M(m)$ - i.e., they connect identically to the already-matched core.
+
+**Growth Operator.** Let $\mathcal{C}(S)$ denote the set of all valid frontier candidate triplets at state $S$. The growth operator $\mathcal{G}$ is:
+
+$$
+\mathcal{G}(S) = \text{LWCC}\!\left( S \cup \{(b, f, m) \in \mathcal{C}(S) : \text{no violation introduced}\} \right)
+$$
+
+where LWCC extracts the largest weakly connected component. The algorithm iterates $S \leftarrow \mathcal{G}(S)$ until $\mathcal{G}(S) = S$.
+
+**Perturbation Operator.** Let $\delta_S(v)$ denote the internal degree of node $v$ in $G_B[S]$. The degree-weighted perturbation samples a removal set $R$ from the lowest-degree nodes:
+
+$$
+R \sim \text{Uniform}\!\left(\{v \in S : \delta_S(v) \leq Q_\alpha(\delta_S)\}^{(k)}\right)
+$$
+
+where $Q_\alpha$ is the $\alpha$-quantile of internal degrees, $k = \lfloor \epsilon |S| \rfloor$ for fraction $\epsilon \in [0.02, 0.08]$, and the superscript $(k)$ denotes a size-$k$ subset.
+
+**MCTS Value Function.** For a frontier candidate $c = (b, f, m)$, the MCTS rollout estimate of its value is:
+
+$$
+V(c \mid S) = \left|\mathcal{G}^T(S \cup \{c\})\right|
+$$
+
+where $\mathcal{G}^T$ denotes $T$ applications of the growth operator (a finite-horizon rollout). The committed candidate at each MCTS round is:
+
+$$
+c^* = \arg\max_{c \in \mathcal{C}(S')} V(c \mid S'), \quad S' = S \setminus R
+$$
+
+**Genetic Crossover Operator.** Given two parent solutions $S_1, S_2$ with matchings $(\phi_1, \psi_1)$ and $(\phi_2, \psi_2)$, the crossover produces offspring:
+
+$$
+S_{\text{cross}} = \mathcal{G}\!\left(\text{LWCC}\!\left(\{b \in S_1 \cap S_2 : \phi_1(b) = \phi_2(b) \text{ and } \psi_1(b) = \psi_2(b)\}\right)\right)
+$$
+
+Conflicting nodes (same $b$ but different $\phi$ or $\psi$ assignments) are discarded. The offspring is then mutated by applying $\mathcal{G}(\mathcal{P}_\epsilon(S_{\text{cross}}))$ for perturbation fraction $\epsilon$.
+
+**Quadratic Assignment (Spectral FAQ).** The boundary alignment problem is cast as:
+
+$$
+\max_{P \in \mathcal{P}_{n}} \text{tr}(A^T P B P^T)
+$$
+
+where $A \in \{0,1\}^{n \times n}$ and $B \in \{0,1\}^{n \times n}$ are the adjacency matrices of the BANC and FAFB boundary halos respectively, $\mathcal{P}_n$ is the set of $n \times n$ permutation matrices, and $n$ is the halo size (up to 1,500). The continuous relaxation (FAQ) optimizes over doubly-stochastic matrices, then the result is rounded and verified discretely against MCNS.
+
+
+
+---
+
 ## Foundational Algorithm: Signature-Based Iterative Growth
 
 The core algorithmic insight that underpins every subsequent notebook is **edge signature matching**. If neuron `b` in BANC is adjacent to already-matched core neurons `{b_1, b_2}` (inbound) and `{b_3}` (outbound), then its valid FAFB match `f` must connect to exactly `{f(b_1), f(b_2)}` and `{f(b_3)}`. The sorted neighborhood pattern acts as a unique structural fingerprint:
