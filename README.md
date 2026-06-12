@@ -279,7 +279,7 @@ python kaggle_nb2_highdeg.py
 **2. Run MCTS search** (upload NB2 output as a Kaggle dataset, then run)
 ```bash
 python kaggle_nb4_mcts.py
-# Output: submission_NB4_MCTS_14484.csv
+# Output: network.csv
 ```
 
 **3. Verify**
@@ -323,6 +323,6 @@ python verify_14484.py
 | `kaggle_maximize_s2.py` | Season 2 refined perturbation |
 | `hungarian_bijection.py` | Cell-type bipartite matching seeder |
 | `verify_14484.py` | Final pairwise verification script |
-| `submission_NB4_MCTS_14484.csv` | **Final answer (14,484 triplets)** |
+| `network.csv` | **Final answer (14,484 triplets)** |
 | `science.md` | Biological significance report |
 | [Interactive 3D Visualization](https://siddgud.github.io/14k_interactive_3d_network/14k_interactive_3d_network.html) | Force-directed 3D graph of the 14,484-node subgraph |

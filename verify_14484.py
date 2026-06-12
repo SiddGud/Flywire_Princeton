@@ -5,7 +5,7 @@ print("="*60)
 print("  VERIFYING MCTS 14,484 SUBMISSION")
 print("="*60)
 
-filename = "submission_NB4_MCTS_14484.csv"
+filename = "network.csv"
 
 # 1. Read the submission
 print(f"Reading {filename}...")
