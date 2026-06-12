@@ -315,16 +315,23 @@ python verify_14484.py
 
 ## Repository Structure
 
-| File | Description |
-|---|---|
-| `kaggle_nb4_mcts.py` | MCTS search - produced the final 14,484 result |
-| `kaggle_nb5_genetic.py` | Genetic algorithm with crossover |
-| `kaggle_nb6_spectral_faq.py` | Spectral FAQ continuous relaxation |
-| `kaggle_nb2_highdeg.py` | High-degree seed racing |
-| `kaggle_maximize_s3.py` | Season 3 degree-weighted perturbation |
-| `kaggle_maximize_s2.py` | Season 2 refined perturbation |
-| `hungarian_bijection.py` | Cell-type bipartite matching seeder |
-| `verify_14484.py` | Final pairwise verification script |
-| `network.csv` | **Final answer (14,484 triplets)** |
-| `science.md` | Biological significance report |
-| [Interactive 3D Visualization](https://siddgud.github.io/14k_interactive_3d_network/14k_interactive_3d_network.html) | Force-directed 3D graph of the 14,484-node subgraph |
+```
+Flywire_Princeton/
+├── README.md                        # This file - technical approach and reproduction guide
+├── science.md                       # Biological significance report (1-page summary)
+├── network.csv                      # Final answer: 14,484 verified matched neuron triplets
+├── src/
+│   ├── kaggle_nb4_mcts.py           # MCTS guided search - produced the final 14,484 result
+│   ├── kaggle_nb5_genetic.py        # Genetic algorithm with crossover
+│   ├── kaggle_nb6_spectral_faq.py   # Spectral FAQ continuous relaxation
+│   ├── kaggle_nb2_highdeg.py        # High-degree seed racing
+│   ├── kaggle_maximize_s3.py        # Season 3 degree-weighted smart perturbation
+│   ├── kaggle_maximize_s2.py        # Season 2 refined perturbation fractions
+│   ├── hungarian_bijection.py       # Cell-type bipartite matching seeder
+│   └── verify_14484.py              # Final pairwise verification script (0 violations)
+└── figures/
+    └── README.md                    # Embedded figures and link to interactive visualization
+```
+
+**Interactive 3D Visualization:** [https://siddgud.github.io/14k_interactive_3d_network/14k_interactive_3d_network.html](https://siddgud.github.io/14k_interactive_3d_network/14k_interactive_3d_network.html)
+

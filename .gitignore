@@ -1,3 +1,25 @@
-*edge_list.csv
-*.feather
+# Large data files
+*.gexf
+*.json
+subgraph_edges.csv
+codex_metadata_*.csv
+
+# Old submission files (keep only network.csv)
+submission_*.csv
+
+# Scratch/exploration scripts not in src/
+codex/
+CAVEclient/
+*.txt
+*.html
+!figures/
+!src/
+!network.csv
+!README.md
+!science.md
+!.gitignore
+
+# Temp and log files
+*.log
 __pycache__/
+*.pyc
