@@ -20,6 +20,8 @@ This is a three-way maximum common induced subgraph problem, which is NP-hard. T
 
 ## Mathematical Formulation
 
+> **Not interested in the math?** [Click here to skip to the algorithmic approach.](#foundational-algorithm-signature-based-iterative-growth)
+
 Let $G_B = (V_B, E_B)$, $G_F = (V_F, E_F)$, and $G_M = (V_M, E_M)$ denote the directed graphs for the BANC, FAFB, and MCNS connectomes respectively. The goal is to find the maximum cardinality set $S \subseteq V_B$ and injective mappings $\phi: S \to V_F$, $\psi: S \to V_M$ such that the **strict isomorphism constraint** holds for all pairs $(u, v) \in S \times S$:
 
 $$
