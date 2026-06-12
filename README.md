@@ -26,7 +26,9 @@ $$
 (u, v) \in E_B \iff (\phi(u), \phi(v)) \in E_F \iff (\psi(u), \psi(v)) \in E_M
 $$
 
-subject to the **connectivity constraint** that the induced subgraph $G_B[S]$ forms a single weakly connected component.
+*In plain terms: a synapse from neuron $u$ to neuron $v$ must exist in BANC if and only if the exact same connection exists between their matched partners in FAFB and MCNS. The arrows must agree across all three brains simultaneously - no exceptions, no approximations.*
+
+Subject to the **connectivity constraint** that the induced subgraph $G_B[S]$ forms a single weakly connected component.
 
 **Signature Function.** For a node $v \notin S$ (a frontier candidate) and the current matching $\phi, \psi$ restricted to $S$, define the structural signature:
 
@@ -34,7 +36,9 @@ $$
 \sigma(v) = \left( \;\text{sort}\!\left(\{i \mid (b_i, v) \in E_B,\; b_i \in S\}\right),\; \text{sort}\!\left(\{i \mid (v, b_j) \in E_B,\; b_j \in S\}\right) \right)
 $$
 
-where $i$ is the positional index of $b_i$ in the current ordering of $S$. Two candidates $v \in V_B$, $f \in V_F$, $m \in V_M$ are a valid match if and only if $\sigma_B(v) = \sigma_F(f) = \sigma_M(m)$ - i.e., they connect identically to the already-matched core.
+where $i$ is the positional index of $b_i$ in the current ordering of $S$. Two candidates $v \in V_B$, $f \in V_F$, $m \in V_M$ are a valid match if and only if $\sigma_B(v) = \sigma_F(f) = \sigma_M(m)$.
+
+*This is the core fingerprinting trick. Rather than testing all possible triplets, we encode each frontier neuron's connectivity to the matched core as a sorted tuple of neighbor indices - its structural "address". Two neurons from different connectomes can only be valid partners if their addresses are byte-for-byte identical. This collapses an O(N^3) search into a hash-table lookup per growth step.*
 
 **Growth Operator.** Let $\mathcal{C}(S)$ denote the set of all valid frontier candidate triplets at state $S$. The growth operator $\mathcal{G}$ is:
 
@@ -44,6 +48,8 @@ $$
 
 where LWCC extracts the largest weakly connected component. The algorithm iterates $S \leftarrow \mathcal{G}(S)$ until $\mathcal{G}(S) = S$.
 
+*The growth operator finds every neuron on the boundary of the current matched set that can be added without breaking a single edge consistency, adds all of them, and discards disconnected islands via BFS. Repeated application drives the subgraph toward its local maximum. Each call runs in $O(|E|)$ time over the edge lists.*
+
 **Perturbation Operator.** Let $\delta_S(v)$ denote the internal degree of node $v$ in $G_B[S]$. The degree-weighted perturbation samples a removal set $R$ from the lowest-degree nodes:
 
 $$
@@ -52,17 +58,21 @@ $$
 
 where $Q_\alpha$ is the $\alpha$-quantile of internal degrees, $k = \lfloor \epsilon |S| \rfloor$ for fraction $\epsilon \in [0.02, 0.08]$, and the superscript $(k)$ denotes a size-$k$ subset.
 
+*Hub neurons with high internal degree are almost certainly correct matches and should be preserved. Peripheral neurons with degree 1-2 are the most likely source of topological blockages. By restricting removals to the bottom quantile of the degree distribution, the algorithm destabilizes the fringe while leaving the stable core intact - producing measurably faster convergence than uniform random removal.*
+
 **MCTS Value Function.** For a frontier candidate $c = (b, f, m)$, the MCTS rollout estimate of its value is:
 
 $$
 V(c \mid S) = \left|\mathcal{G}^T(S \cup \{c\})\right|
 $$
 
-where $\mathcal{G}^T$ denotes $T$ applications of the growth operator (a finite-horizon rollout). The committed candidate at each MCTS round is:
+where $\mathcal{G}^T$ denotes $T=15$ applications of the growth operator (a finite-horizon rollout). The committed candidate at each MCTS round is:
 
 $$
 c^* = \arg\max_{c \in \mathcal{C}(S')} V(c \mid S'), \quad S' = S \setminus R
 $$
+
+*Greedy growth is myopic: it adds any valid node immediately, even if that node's edge pattern will block many better additions later. MCTS fixes this by simulating the future. For each candidate on the frontier, we temporarily add it and run $T=15$ grow iterations to see the eventual subgraph size. We permanently commit to the candidate with the highest future value - not just the first valid one found. This lookahead is what pushed the result from 13,427 to 14,484.*
 
 **Genetic Crossover Operator.** Given two parent solutions $S_1, S_2$ with matchings $(\phi_1, \psi_1)$ and $(\phi_2, \psi_2)$, the crossover produces offspring:
 
@@ -70,7 +80,9 @@ $$
 S_{\text{cross}} = \mathcal{G}\!\left(\text{LWCC}\!\left(\{b \in S_1 \cap S_2 : \phi_1(b) = \phi_2(b) \text{ and } \psi_1(b) = \psi_2(b)\}\right)\right)
 $$
 
-Conflicting nodes (same $b$ but different $\phi$ or $\psi$ assignments) are discarded. The offspring is then mutated by applying $\mathcal{G}(\mathcal{P}_\epsilon(S_{\text{cross}}))$ for perturbation fraction $\epsilon$.
+*Different random seeds converge to different local maxima - partially overlapping, partially distinct neuron sets. The crossover keeps only the neurons both parents agreed on (same BANC-to-FAFB and BANC-to-MCNS assignment), discards conflicts, and re-grows from the consensus. Because the consensus core is a higher-quality seed than either parent alone, the offspring is often larger than both parents.*
+
+Conflicting nodes (same $b$ but different $\phi$ or $\psi$ assignments across parents) are discarded, and the offspring is mutated by applying $\mathcal{G}(\mathcal{P}_\epsilon(S_{\text{cross}}))$ for perturbation fraction $\epsilon$.
 
 **Quadratic Assignment (Spectral FAQ).** The boundary alignment problem is cast as:
 
@@ -78,7 +90,9 @@ $$
 \max_{P \in \mathcal{P}_{n}} \text{tr}(A^T P B P^T)
 $$
 
-where $A \in \{0,1\}^{n \times n}$ and $B \in \{0,1\}^{n \times n}$ are the adjacency matrices of the BANC and FAFB boundary halos respectively, $\mathcal{P}_n$ is the set of $n \times n$ permutation matrices, and $n$ is the halo size (up to 1,500). The continuous relaxation (FAQ) optimizes over doubly-stochastic matrices, then the result is rounded and verified discretely against MCNS.
+where $A, B \in \{0,1\}^{n \times n}$ are the adjacency matrices of the BANC and FAFB boundary halos, $\mathcal{P}_n$ is the set of $n \times n$ permutation matrices, and $n \leq 1{,}500$ is the halo size.
+
+*Finding the exact optimum of this objective is NP-hard (it is the Graph Matching problem). The FAQ algorithm relaxes the constraint from permutation matrices to the convex hull of doubly-stochastic matrices and solves it via gradient ascent, then rounds back. The intuition: instead of greedily matching boundary neurons one-by-one, we ask what global permutation of FAFB boundary neurons maximizes the total edge agreement with BANC's boundary. The soft alignment is then snapped to strict discrete triplets and verified against MCNS.*
 
 
 
