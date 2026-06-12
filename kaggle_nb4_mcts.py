@@ -178,7 +178,17 @@ if __name__ == '__main__':
     print("=" * 65)
     print(f"\nLoading base state from: {SEED_FILE}")
     raw_df = pd.read_csv(SEED_FILE, dtype=str)
-    raw_core = {str(b): (str(f), str(m)) for b, f, m in zip(raw_df['BANC'], raw_df['FAFB'], raw_df['MCNS'])}
+    
+    # --- BULLETPROOF BIJECTION FIX ---
+    raw_core = {}
+    seen_f, seen_m = set(), set()
+    for b, f, m in zip(raw_df['BANC'], raw_df['FAFB'], raw_df['MCNS']):
+        b, f, m = str(b), str(f), str(m)
+        if f not in seen_f and m not in seen_m:
+            raw_core[b] = (f, m)
+            seen_f.add(f); seen_m.add(m)
+    print(f"Loaded {len(raw_core):,} strictly valid bijective nodes from seed.")
+    # ---------------------------------
 
     # Ensure starting core is connected
     best_core = run_grow(raw_core, 42, max_iters=2)
