@@ -118,116 +118,17 @@ This procedure guarantees zero violations by construction at every step.
 
 ---
 
-## Phase 1: Initial Seeding Strategies
+## Algorithm Evolution & Historical Strategies
 
-The growth algorithm is sensitive to the quality of the initial seed - starting from a random singleton typically yields very small subgraphs.
+The pipeline evolved through several optimization phases. For a full chronological log of every experiment, see the [Exploration Log](docs/exploration_log.md).
 
-I evaluated three seeding approaches in parallel:
+**1. Initial Seeding:** The growth algorithm requires a strong initial seed. I evaluated bipartite cell-type matching, NBLAST morphology matching, and KMeans degree clustering. The Hungarian cell-type matching provided the best starting point.
 
-**Cell-type bipartite matching (Hungarian algorithm).** I fetched cell-type classifications from the Codex metadata API and computed the optimal one-to-one assignment across connectomes using the Hungarian algorithm. This produced an initial seed of approximately 4,780 triplets.
+**2. Smart Perturbation:** To escape local maxima, I wrapped the greedy growth in a perturbation loop: removing a fraction of nodes and re-growing. I found that removing 5-8% of nodes, specifically targeting **low-degree boundary nodes**, preserved the stable core while allowing the outer shell to reorganize.
 
-**NBLAST morphology matching.** Precomputed NBLAST morphological similarity scores were used to generate candidate triplets across connectomes, yielding approximately 4,500 initial nodes.
+**3. The Connectivity Constraint:** Early runs hit 19,827 nodes, but extracting the largest weakly connected component (LWCC) shattered the result to ~100 nodes. The algorithm was growing disconnected isomorphic islands. I redesigned the pipeline to enforce connectivity *inside* the growth loop at every step.
 
-**KMeans degree-distribution clustering.** Neurons were grouped by degree and cell-type distribution, then matched cluster-by-cluster. This reached approximately 5,600 initial nodes.
-
-The Hungarian cell-type seed provided the best starting point and was used as the foundation for subsequent optimization.
-
----
-
-## Phase 2: Iterative Perturbation and Parallel Grow
-
-The signature-grow algorithm is a greedy procedure that saturates at local maxima. To escape these, I introduced an outer **perturbation loop**:
-
-1. Take the current best core.
-2. Remove a random fraction (2-8%) of nodes from the core.
-3. Re-run the signature-grow algorithm from the perturbed state.
-4. If the result is larger, replace the current best.
-
-I parallelized this using `multiprocessing.Pool` across 4 workers, running different perturbation fractions `[0.02, 0.03, 0.05, 0.07, 0.08]` simultaneously and retaining the best result at each round.
-
-Analysis of early-run logs showed that fractions of 5% and 8% produced over 95% of all improvements. Subsequent runs ("Season 2") focused exclusively on the productive fraction range, achieving approximately 3x more useful attempts per compute window. The result climbed from ~5,600 to 16,255 and then to 17,676 nodes.
-
----
-
-## Phase 3: Degree-Weighted Smart Perturbation
-
-A key refinement was introduced in the third optimization pass: **degree-weighted node removal**. Rather than removing nodes uniformly at random, I preferentially targeted low-degree boundary nodes - those with the fewest internal edges - while preserving well-connected hub nodes.
-
-```python
-degree = compute_internal_degrees(core)
-sorted_keys = sorted(keys, key=lambda b: degree[b])  # ascending by degree
-pool = sorted_keys[:n_remove * 3]                     # pool of boundary candidates
-to_remove = rng.choice(pool, size=n_remove)           # sample from boundary
-```
-
-The intuition is that high-degree hub neurons are structurally central and almost certainly correct matches, while low-degree peripheral neurons are most likely to be causing topological conflicts that prevent further growth. This strategy preserved the stable core skeleton while allowing the outer shell to reorganize, reaching **19,827 nodes** - the highest raw count achieved.
-
----
-
-## Phase 4: Connectivity Constraint and Pipeline Redesign
-
-Upon applying the weakly-connected component requirement - extracting the single largest BFS-reachable component from the 19,827-node result - the subgraph reduced to approximately 100 nodes.
-
-The cause was that the greedy growth procedure had been simultaneously expanding multiple disconnected clusters across the connectome, each individually isomorphic but sharing no edges. The optimization objective (maximize total node count) and the evaluation constraint (single connected component) were misaligned.
-
-This required a fundamental redesign: `extract_lwcc()` was moved inside the grow loop itself, applied at every iteration, so that connectivity was enforced throughout optimization rather than as a post-processing step.
-
-```python
-def run_grow(starting_core, seed):
-    core = dict(starting_core)
-    for _ in range(max_iters):
-        # ... signature grow step ...
-    return extract_lwcc(core)  # enforced at every call
-```
-
-All subsequent phases operated under this constraint from the first iteration.
-
----
-
-## Phase 5: High-Degree Seed Racing
-
-With connectivity enforced, a fresh seeding strategy was needed. I computed the degree of every node in all three connectomes and selected the top 2,000 highest-degree BANC nodes as candidate seeds. These were paired rank-by-rank with the top 2,000 in FAFB and MCNS, forming 2,000 seed triplets that were raced in parallel across 4 workers. The largest resulting connected subgraph was retained.
-
-The rationale is that hub neurons - being highly connected - are most likely to lie at the center of a large connected isomorphic region rather than scattered across disconnected islands.
-
-This produced an initial connected core of approximately 8,526 nodes, which served as the seed for all subsequent phases.
-
----
-
-## Phase 6: Monte Carlo Tree Search
-
-The largest single improvement came from applying **Monte Carlo Tree Search (MCTS)** as the outer optimization strategy, replacing the myopic perturbation loop.
-
-The fundamental limitation of greedy growth is that it cannot account for how each addition affects future growth opportunities. Adding a given neuron may be immediately valid while simultaneously closing off dozens of other candidates due to the strict edge constraint.
-
-MCTS addresses this by evaluating the **future value** of each candidate addition through rollout simulations:
-
-1. Perturb the current best core by removing 2-6% of low-degree nodes.
-2. Identify all valid frontier candidates adjacent to the perturbed core.
-3. For each candidate, temporarily force-add it to the core and run a fast greedy rollout for 15 iterations to estimate future growth potential.
-4. Permanently commit to the candidate that produced the largest rollout - the one that opens the most downstream growth.
-5. Run up to 16 candidate rollouts simultaneously across 4 parallel workers.
-
-```python
-# Evaluate the future value of each frontier candidate
-tasks = [(perturbed_core, candidate, seed) for candidate in frontier]
-rollout_results = pool.map(mcts_rollout_worker, tasks)
-
-# Commit to the branch with highest long-term potential
-best_n, best_core = max(rollout_results, key=lambda r: r[0])
-```
-
-The first MCTS run produced 13,427 connected nodes. After tuning the perturbation schedule and rollout depth, the final run reached **14,484 connected nodes** with zero violations - the submitted result.
-
----
-
-## Phase 7: Genetic Algorithm and Spectral Relaxation
-
-Two additional strategies were pursued in parallel to attempt to push beyond 14,484.
-
-**Genetic Algorithm with Crossover (NB5).** Multiple independent runs of the growth algorithm converge to different local maxima. A genetic algorithm was implemented to combine these: crossover merges all non-conflicting nodes from two parent cores, discards conflicts, re-verifies strict isomorphism, and extracts the LWCC. Mutation removes 2-6% of low-degree nodes, followed by regrowth. A population of 10 genomes was maintained with tournament selection biased toward larger cores. This reached 14,955 nodes.
-
-**Spectral FAQ Continuous Relaxation (NB6).** This approach used `scipy.optimize.quadratic_assignment` with the FAQ algorithm to perform soft probabilistic alignment of the boundary "halo" (up to 1,500 nodes) of the current core, augmented with ghost edges encoding core affinities. The continuous soft matches were then snapped to strict discrete triplets by pairwise verification against MCNS. This reached 15,083 nodes. Both results required additional connectivity pruning and the cleanest strictly-verified connected answer remained 14,484 from the MCTS run.
+**4. MCTS & Advanced Search:** The final breakthroughs came from Monte Carlo Tree Search (simulating 15 steps ahead before committing to a boundary addition) and a Genetic Algorithm with crossover (merging non-conflicting components from different runs). The MCTS run produced the cleanest, fully-connected 14,484-node result.
 
 ---
 
