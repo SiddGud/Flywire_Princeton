@@ -28,7 +28,7 @@ The neurotransmitter breakdown I pulled from Codex showed **67% cholinergic** (e
 Neuroglancer rendering of the visual circuit, <b>exactly matching with</b> the identified 14,484 strictly homologous neurons. The layout highlights the crystalline T4/T5 columnar arrays and massive wide-field integrators.
 </td>
 <td valign="top">
-<img width="100%" src="figures/science_network_graph.png" />
+<img width="100%" src="figures/aa.png" />
 <br><br>
 Force-directed layout of the complete 14,484-node FAFB induced subgraph. Since 14,484 neurons are densely clustered together, it is difficult to discern individual pathways in a static image. Therefore, I have provided an interactive 3D HTML visualization. <b><a href="https://siddgud.github.io/14k_interactive_3d_network/14k_interactive_3d_network.html">Click here to view the live interactive 3D HTML visualization</a></b> for detailed insights, interactive exploration, and synapse edge analysis.
 </td>
