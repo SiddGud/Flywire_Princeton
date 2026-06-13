@@ -120,19 +120,29 @@ This procedure guarantees zero violations by construction at every step.
 
 ## Phases 1-3: Initial Seeding and Perturbation
 
-The growth algorithm requires a strong initial seed to prevent early stagnation. I evaluated multiple approaches (NBLAST morphology, KMeans degree clustering), but found that cell-type bipartite matching (via the Hungarian algorithm on Codex metadata) provided the best foundation. Because the greedy signature-growth algorithm naturally saturates at local maxima, I introduced a "smart perturbation" loop. By repeatedly removing 5-8% of the lowest-degree boundary nodes and re-growing from the stable core, the algorithm successfully escaped local traps and pushed the raw node count near 20,000.
+The growth algorithm requires a strong initial seed to prevent early stagnation.
+1. **Seeding:** I evaluated multiple approaches (NBLAST morphology, KMeans degree clustering), but found that cell-type bipartite matching (via the Hungarian algorithm on Codex metadata) provided the best foundation.
+2. **Greedy Growth:** The signature-matching loop was run to grow the subgraph from the initial seed. However, greedy addition naturally saturates at local maxima.
+3. **Smart Perturbation:** To escape these local traps, I wrapped the growth algorithm in a perturbation loop. By repeatedly removing 5-8% of the lowest-degree boundary nodes and re-growing from the stable core, the algorithm successfully pushed the raw node count near 20,000.
 
 ---
 
 ## Phases 4-5: Enforcing the Connectivity Constraint
 
-A critical issue emerged when enforcing the competition's rule that the final subgraph must form a single weakly-connected component. Extracting the largest connected component from the 20,000-node result reduced it to merely ~100 nodes, revealing that the algorithm had been growing disconnected isomorphic "islands." To fix this, I fundamentally redesigned the pipeline to enforce connectivity *inside* the growth loop at every step. A new seeding strategy—racing the top 2,000 highest-degree hub neurons across all three connectomes—was used to guarantee the algorithm started from a dense, connected core.
+A critical issue emerged when enforcing the competition's rule that the final subgraph must form a single weakly-connected component.
+1. **The Disconnected Islands Problem:** Extracting the largest connected component from the 20,000-node result reduced it to merely ~100 nodes, revealing that the algorithm had been growing disconnected isomorphic "islands."
+2. **Inside-Loop Constraint:** To fix this, I fundamentally redesigned the pipeline to enforce connectivity *inside* the growth loop at every single step, guaranteeing all added nodes touch the existing core.
+3. **Hub Seeding:** Because the Hungarian seed was disconnected, I implemented a new "racing" strategy: identifying the top 2,000 highest-degree hub neurons across all three connectomes and racing them in parallel to find the densest, most connected starting core.
 
 ---
 
 ## Phases 6-7: Monte Carlo Tree Search and Advanced Search
 
-The final and most significant breakthroughs came from applying Monte Carlo Tree Search (MCTS) and Genetic Algorithms. The limitation of greedy growth is that adding one valid neuron might permanently block dozens of better future additions. MCTS solved this by simulating 15 steps ahead (rollouts) before committing to any boundary addition, evaluating the true "future value" of each candidate. In parallel, a Genetic Algorithm with crossover was used to merge non-conflicting components from different runs. The MCTS approach ultimately produced the cleanest, fully-connected 14,484-node result submitted.
+The final breakthroughs pushed the fully-connected subgraph to its maximum size.
+1. **The Lookahead Problem:** The limitation of greedy growth is that adding one valid neuron might permanently block dozens of better future additions due to edge constraints.
+2. **Monte Carlo Tree Search (MCTS):** To solve this, I simulated 15 steps ahead (rollouts) before committing to any boundary addition. This evaluated the true "future value" of each candidate rather than just immediate validity.
+3. **Genetic Crossover:** In parallel, a Genetic Algorithm with crossover was used to merge non-conflicting components from different randomized runs.
+4. **Result:** The MCTS approach ultimately produced the cleanest, fully-connected 14,484-node result submitted.
 
 ---
 
