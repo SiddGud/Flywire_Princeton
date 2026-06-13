@@ -23,7 +23,7 @@ The neurotransmitter breakdown I pulled from Codex showed **67% cholinergic** (e
 </tr>
 <tr>
 <td valign="top">
-<img width="100%" src="figures/science_3d_mesh.png" />
+<img width="100%" src="figures/fig5_3d_brain.jpg" />
 <br><br>
 Neuroglancer rendering of the visual circuit, <b>exactly matching with</b> the identified 14,484 strictly homologous neurons. The layout highlights the crystalline T4/T5 columnar arrays and massive wide-field integrators.
 </td>
